@@ -40,3 +40,5 @@ the above example repo requires Visual Studio, I was using Clion.
 Currently looking into whether I'll be able to use Clion with some plugins or if VS Code is an option.
 
 I'd rather not have to deal with Visual Studio.
+
+But it is a good reminder that it would be good to build this with use in generalized IDEs in mind.
