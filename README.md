@@ -3,7 +3,7 @@ I am attempting to achieve a set up that will allow me to simulate the managemen
 
 ## why on earth am I doing this?
 I wanted to learn ansible, and since I'm not made of money, I don't have access to servers to play around with.  
-Then when I was trying to use JetBrains CLion IDE with Alpine or Ubuntu, I was running into all sorts of environment configuration overhead.
+Then when I was trying to use JetBrains CLion IDE with Alpine or Ubuntu, I was running into all sorts of environment configuration overhead.  
 
 So, then I thought that using ansible might be a way I could easily set a WSL instance up to deal with this.  
 I searched around looking for a way of doing this, but most results involving wsl and ansible together involved instructions on how to install it there.  
@@ -33,3 +33,10 @@ https://github.com/Microsoft/WSL-DistroLauncher (latest commit [32f88e8](https:/
 
 I don't know C/C++ _very_ well, but they're not unknown to me and I'm more than happy to learn.  
 I'll also see about using Rust if possible since I enjoy it, but more than likely it will introduce too much complexity.
+
+## first impressions
+
+the above example repo requires Visual Studio, I was using Clion.  
+Currently looking into whether I'll be able to use Clion with some plugins or if VS Code is an option.
+
+I'd rather not have to deal with Visual Studio.
