@@ -74,78 +74,108 @@ Made several attempts at converting the project to be compatible and I think the
 I skipped step 1 entirely, as I have no idea what to look for there.  
 The first issue I had was the MSBuild path in `build.bat`. So I updated that:
 
-    if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" (
-        set MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
-        goto :FOUND_MSBUILD
-    )
+```bat
+if exist "%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe" (
+    set MSBUILD="%ProgramFiles%\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+    goto :FOUND_MSBUILD
+)
+```
 
-But when I ran the script it still failed to build (re-formated and PII sanitized):  
-
-     "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher.sln" (Build target) (1) ->
-       "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher\DistroLauncher.vcxproj" (default target) (3) ->
-       (CustomBuild target) ->
-         C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(247,5): 
-         warning MSB8065: Custom build for item "messages.mc" succeeded, but specified output 
-         "$HOME\source\repos\wsl-distrolauncher\distrolauncher\msg0409.bin" has not been created.
-         This may cause incremental build to work incorrectly. 
-         [$HOME\source\repos\WSL-DistroLauncher\DistroLauncher\DistroLauncher.vcxproj]
-
-
-       "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher.sln" (Build target) (1) ->
-       "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj.metaproj" (default target) (2) ->
-       "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj" (default target) (4) ->
-         C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(2645,3): 
-         error MSB4019: The imported project 
-           "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\WindowsXaml\v17.0\Microsoft.Windows.UI.Xaml.Cpp.targets" was not found. 
-           Confirm that the expression in the Import declaration 
-           "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\WindowsXaml\v17.0\Microsoft.Windows.UI.Xaml.Cpp.targets" is correct, 
-           and that the file exists on disk. [$HOME\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj]
-
-    1 Warning(s)
-    1 Error(s)
+But when I ran the script it still failed to build (re-formated and PII sanitized):  [output](./readme_overflow/build_script_output/Xaml.Cpp.targets_notfound.md)
     
-As you can see there's some issue with the `Microsoft.Windows.UI.Xaml.Cpp.targets` file. So I removed this line from `DistroLauncher-Appx\DistroLauncher-Appx.vcxproj`:  
+As you can see there's some issue with the `Microsoft.Windows.UI.Xaml.Cpp.targets` file. So I removed this line from `DistroLauncher-Appx\DistroLauncher-Appx.vcxproj` (In retrospect, I am not sure why I thought this would work):  
 
-    <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+```xml
+<Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+```
 
-Then `build.bat` failed for a different reason! yay:
-
-    "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher.sln" (Build target) (1) ->
-       "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher\DistroLauncher.vcxproj" (default target) (3) ->
-       (CustomBuild target) ->
-         C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets(247,5): 
-           warning MSB8065: Custom build for item "messages.mc" succeeded, but specified output 
-           "$HOME\source\repos\wsl-distrolauncher\distrolauncher\msg0409.bin" has not been created. 
-           This may cause incremental build to work incorrectly. 
-           [$HOME\source\repos\WSL-DistroLauncher\DistroLauncher\DistroLauncher.vcxproj]
-
-
-       "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher.sln" (Build target) (1) ->
-       "$HOME\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj.metaproj" (default target) (2) ->
-       "$HOMR\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj" (default target) (4) ->
-         $HOME\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj : 
-           error MSB4057: The target "Build" does not exist in the project.
-
-    1 Warning(s)
-    1 Error(s)
+Then `build.bat` failed for a different reason! yay: [output](./readme_overflow/build_script_output/target_build_DNE.md)
 
 So, I tried building using VS's builtins from the solution explorer (right click each 'project' and click 'Build').  
 This worked for the `launcher` project, but not for the `DistroLauncher-Appx` project, I got similar errors.
 
-Result of it with that line I deleted:
-   
-| Severity | Code | Description | Project | File | Line |
-| ---      | ---  | ---         | ---     | ---  | ---  |
-| Error | MSB4057 | The target "Build" does not exist in the project. | $HOME\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj | $HOME\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj | 1 |
-| Warning | MSB8065 | Custom build for item "messages.mc" succeeded, but specified output "$HOME\source\repos\wsl-distrolauncher\distrolauncher\msg0409.bin" has not been created. This may cause incremental build to work incorrectly. | launcher | C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppCommon.targets | 247 |
-| Warning | LNK4075 | ignoring '/INCREMENTAL' due to '/LTCG' specification | launcher | $HOME\source\repos\WSL-DistroLauncher\DistroLauncher\LINK | 1 |
-| Error |  | The BaseOutputPath/OutputPath property is not set for project 'DistroLauncher-Appx.vcxproj'.  Please check to make sure that you have specified a valid combination of Configuration and Platform for this project.  Configuration='Release'  Platform='x64'.  This error may also appear if some other project is trying to follow a project-to-project reference to this project, this project has been unloaded or is not included in the solution, and the referencing project does not build using the same or an equivalent Configuration or Platform. | DistroLauncher-Appx | C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\amd64\Microsoft.Common.CurrentVersion.targets | 832 |
+Result of it with that line I deleted [here](./readme_overflow/vs_native_build_output/base_output_path_not_set.md), deleting it results only in a change to the last line as seen [here](./readme_overflow/vs_native_build_output/target_build_dne_x2.md).
 
-Deleting it results in the last line changing to this:
-
-| Severity | Code | Description | Project | File | Line |
-| ---      | ---  | ---         | ---     | ---  | ---  |
-| Error | MSB4057 | The target "Build" does not exist in the project. | DistroLauncher-Appx | $HOME\source\repos\WSL-DistroLauncher\DistroLauncher-Appx\DistroLauncher-Appx.vcxproj | 1 |
 
 So, I'm going to assume that the first error from `build.bat` is legitimate, as I did not actually delete the file that was having the import issue.
 After a quick search around I found that installing the Universal Windows App development feature of VS might fix it, so I'm doing that now.
+
+Okay, I installed that thing, and now got some completely different errors!!  
+Would you look at that.
+
+I got a warning in the VS ui (in the Solution Explorer, .sln view) that I needed to install some missing components. 
+So, I clicked the 'Install' link and nothing happened.
+But then I remember that it's windows, so I closed the VS Installer (that I still had open) and then clicked the link, and it started installing this:
+
+    C++ (v143) Universal Windows Platform tools
+
+Once complete, I ran `build.bat` again and saw this [output](./readme_overflow/build_script_output/platform_install.tar.gz_notfound.md).
+
+
+### the `install` tarball
+
+The build project xml is referencing `install.tar.gz` in a platform specific directory, however the instructions only mention putting that install tarball into the main directory (step 7):
+
+> Copy your tar.gz containing your distro into the root of the project and rename it to install.tar.gz.
+
+The README for that project also mentions this (Step 2):
+
+> Edit your distribution-specific information in DistributionInfo.h and DistributionInfo.cpp. NOTE: The DistributionInfo::Name variable must uniquely identify your distribution and cannot change from one version of your app to the next.
+>>Note: The examples for creating a user account and querying the UID are from an Ubuntu-based system, and may need to be modified to work appropriately on your distribution.
+
+So I initially, I looked for a Ubuntu image, but I only ever found .iso images. 
+Instead I'm trying with an Alpine tarball image from [here](https://alpinelinux.org/downloads/). 
+
+Obviously this will cause issues down the road for this POC, but I'll just have to adjust the `DistributionInfo.cpp` configuration to match. 
+Ideally we'll be automated this part of the process as well, so it'll be a good excercise.
+
+I did actually follow this part of the instructions, and had the Alpine image in the root directory. This did not satisfy the reference to `..\ARM64\install.tar.gz` nor to `..\x64\install.tar.gz` that the project was expecting.
+
+So, I added this to the `build.bat` script:
+
+```bat
+:FOUND_MSBUILD
+set _MSBUILD_TARGET=Build
+set _MSBUILD_CONFIG=Debug
+# added because we'll be referencing the platform twice
+set _MSBUILD_PLATFORM=x64
+
+:ARGS_LOOP
+if (%1) == () goto :POST_ARGS_LOOP
+if (%1) == (clean) (
+    set _MSBUILD_TARGET=Clean,Build
+)
+if (%1) == (rel) (
+    set _MSBUILD_CONFIG=Release
+)
+
+# added these, figured since we already have a variable, we might as well
+if (%1) == (arm64) (
+    set _MSBUILD_PLATFORM=ARM64
+)
+if (%1) == (x64) (
+    set _MSBUILD_PLATFORM=x64
+)
+shift
+goto :ARGS_LOOP
+
+:POST_ARGS_LOOP
+# need to make sure directory exists before copying the tarball
+if not exist %~dp0\%_MSBUILD_PLATFORM% (
+    MKDIR %~dp0\%_MSBUILD_PLATFORM%
+)
+# copy the install tarball into the appropriate platform directory
+# overwrites b/c changes to the tarball should affect the build
+COPY %~dp0\install.tar.gz %~dp0\%_MSBUILD_PLATFORM%\install.tar.gz
+
+# add the platform variable here
+%MSBUILD% %~dp0\DistroLauncher.sln /t:%_MSBUILD_TARGET% /m /nr:true /p:Configuration=%_MSBUILD_CONFIG%;Platform=%_MSBUILD_PLATFORM%   
+```
+
+I executed the `build.bat` script again and that skipping the certificate step finally [caught up with me](./readme_overflow/build_script_output/missing_certificate.md)
+
+### finally, to deal with the certificate
+
+After all of the previous I finally have to figure out how to generate a test certificate, and why that's important.
+
+Will I have to generate one everytime I want to boot up one of these things?
