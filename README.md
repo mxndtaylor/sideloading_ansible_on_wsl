@@ -179,3 +179,11 @@ I executed the `build.bat` script again and that skipping the certificate step f
 After all of the previous I finally have to figure out how to generate a test certificate, and why that's important.
 
 Will I have to generate one everytime I want to boot up one of these things?
+
+well in any case, I found some documentation about the cert [here](https://learn.microsoft.com/en-us/windows/msix/package/create-certificate-package-signing), which I found linked from [this issue thread on the repo](https://github.com/microsoft/WSL-DistroLauncher/issues/29). 
+
+Now that everything else is working, when I open the `MyDistro.appxmanifest` file, it did actually display a packaging tab! Victory!
+
+Well, that was, as expected, shortlived. Make sure you update `PackageCertificateThumbprint` to match the thumbprint of the cert you just generated.
+
+After that, I started getting error output like [this](./readme_overflow/build_script_output/payload_files_dne.md)
